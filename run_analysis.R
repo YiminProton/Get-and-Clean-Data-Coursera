@@ -1,0 +1,32 @@
+setwd("~/Downloads/UCI HAR Dataset")
+activity <- read.table("activity_labels.txt", header = F, sep = "")
+activity [,2] <- as.character(activity[,2])
+feature <- read.table("features.txt", header = FALSE, sep = "")
+feature[,2] <- as.character(feature[,2])
+featureVar <- grep(".*mean.*|.*std.*",feature[,2])
+featureid<- feature[which(feature$V1%in%featureVar),2]
+featureid = gsub('-mean', 'Mean', featureid)
+featureid = gsub('-std', 'Std', featureid)
+featureid <- gsub('[-()]', '', featureid)
+str(featureid)
+## Load data
+setwd("~/Downloads/UCI HAR Dataset/train")
+x_train <- read.table("X_train.txt", header = FALSE, sep = "")
+y_train <- read.table("Y_train.txt", header = FALSE, sep = ",")
+subject_train <- read.table("Subject_train.txt", header = FALSE, sep = ",")
+train <- cbind(subject_train,y_train,x_train)
+setwd("~/Downloads/UCI HAR Dataset/test")
+x_test <- read.table("X_test.txt", header = FALSE, sep = "")
+y_test<- read.table("y_test.txt", header = FALSE, sep = ",")
+subject_test <- read.table("subject_test.txt", header = F, sep ="")
+test<- cbind(subject_test,y_test, x_test)
+## Merge train and test to build the complete data set
+data <- rbind(train, test)
+colnames(data) <-c("subject","activity",featureid)
+
+## As factor
+data$subject <- as.factor(data$subject)
+data$activity <- factor(data$activity, levels = activity[,1], labels = activity[,2])
+library(reshape2)
+reshapedata <- melt(data, id = c("subject", "activity"))
+data.mean <- dcast(reshapedata, subject + activity ~ variable, mean)
